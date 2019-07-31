@@ -216,34 +216,23 @@ var aux:string;
 begin
     j:=1;
     k:=1;
+    aux:='';
         for j:=1 to columns do begin
-            while((k<=length(line)) and (line[k]<>' ')) do begin
-                if not (line[k]=' ') then begin
-                    if (line[k] in ['0'..'9']) then begin
-                        aux:=aux+line[k];
-                    end;
-                end;
-            k:=k+1;
-            end;
-
-            X[i,j]:=strtoint(aux);
-            //writeln('Numero ahorita es: ',X[i,j]);
-            aux:='';
-
-            while ((k<=length(line)) and (line[k]=' ')) do begin 
+            while((line[k]<>' ') and (k<=length(line))) do begin
+                aux:=aux+line[k];
                 k:=k+1;
-                aux:='';
             end;
-
-        end;
+            X[i,j]:=strtoint(aux);
+            aux:='';
+            k:=k+1;
+    end;
 end;
 
 procedure fillData(var input:text);
 var line,aux:string;
-var lcount,i,j,k,rowCount,columns,regions,mCount:integer;
+var lcount,i,j,k,rowCount,regions,mCount:integer;
 begin
     aux:='';
-    columns:=1;
     lcount:=0;
     regions:=0;
     mCount:=0;
@@ -415,6 +404,24 @@ begin
     writeln('Fin del programa');
     readkey;
 end.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
