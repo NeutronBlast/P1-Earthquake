@@ -33,6 +33,24 @@ var r:boolean;
         verifyExistence:=r;
     end;
 
+function select:integer;
+var op:integer;
+begin
+    op:=1;
+    writeln('   1. ', place[1].name);
+    writeln('   2. ', place[2].name);
+    writeln('   3. ', place[3].name);
+    writeln('   4. ', place[4].name);
+    writeln('   5. ', place[5].name);
+    writeln('   6. ', place[6].name);
+    writeln('   7. ', place[7].name);
+    writeln('   8. ', place[8].name);
+    writeln('   9. ', place[9].name);
+    writeln('   0. Regresar');
+    readln(op);
+select:=op;
+end;
+
 function searchForMistakes(var input:text):boolean;
 var line,aux:string;
 var error:boolean;
@@ -314,36 +332,142 @@ begin
         end;
 end;
 
+procedure showDataMatrix(var X: quantity; r,c:integer);
+var i,j:integer;
+begin
+    for i:=1 to r do begin
+        for j:=1 to c do begin
+            write(X[i,j],' | ');
+        end;
+        writeln;
+    end;
+end;
+
 procedure showZones;
 var op:integer;
 begin
     op:=-1;
-        while (op<>0) do begin
+        if (op<>0) then begin
             writeln('Seleccione una zona');
             writeln;
-            writeln('   1. ', place[1].name);
-            writeln('   2. ', place[2].name);
-            writeln('   3. ', place[3].name);
-            writeln('   4. ', place[4].name);
-            writeln('   5. ', place[5].name);
-            writeln('   6. ', place[6].name);
-            writeln('   7. ', place[7].name);
-            writeln('   8. ', place[8].name);
-            writeln('   9. ', place[9].name);
-            writeln('   0. Regresar');
-            readln(op);
+            op:=select;
         end;
 
         if (op = 0) then exit
         else begin
-
+            writeln('Datos costo para la region ',place[op].name);
+            writeln;
+            showDataMatrix(place[op].cost, place[op].r, place[op].c);
+            writeln;
+            writeln('Datos dolor para la region ',place[op].name);
+            writeln;
+            showDataMatrix(place[op].victims, place[op].r, place[op].c);
+            writeln;
+            writeln;
+            writeln('Presione cualquier tecla para continuar');
+            readkey;
         end;
+end;
+
+procedure generateMatrix(var X:quantity; r,c:integer);
+var i,j,num:integer;
+begin
+    for i:=1 to r do
+        for j:=1 to c do begin
+            num:=random(300)+1;
+            X[i,j]:=num;
+        end;
+end;
+
+
+procedure writeOverwrite;
+var op:integer;
+begin
+op:=-1;
+    if (op<>0) then begin
+        writeln('Seleccione en que posicion le gustaria agregar una zona');
+        writeln('Si selecciona una zona que ya posee un nombre asignado esta se sobrescribira');
+        writeln;
+        op:=select;
+
+        if (op = 0) then exit
+        else begin
+            writeln('Escriba un nombre para la zona ',op);
+            readln(place[op].name);
+            repeat
+                writeln('Escriba el numero de filas para la zona ', place[op].name);
+                readln(place[op].r);
+                if ((place[op].r<0) or not(place[op].r in [1..30])) then writeln('Numero de filas debe ser un numero entero positivo mayor que cero y menor o igual a 30');
+            until (place[op].r>0);
+
+            repeat
+            writeln('Escriba el numero de columnas para la zona ', place[op].name);
+            readln(place[op].c);
+                if ((place[op].c<0) or not(place[op].c in [1..30])) then writeln('Numero de columnas debe ser un numero entero positivo mayor que cero y menor o igual a 30');
+            until (place[op].c>0);
+            randomize;
+            generateMatrix(place[op].cost,place[op].r,place[op].c);
+            generateMatrix(place[op].victims,place[op].r,place[op].c);
+            writeln('Datos generados satisfactoriamente, para consultar los datos');
+            writeln('regrese al menu principal presionando cualquier tecla y seleccionando la opcion 7');
+            readkey;
+        end;        
+    end;
+end;
+
+
+procedure modifyData;
+var op:integer;
+begin
+op:=-1;
+    writeln('Seleccione una region a modificar');
+    writeln;
+    op:=select;
+
+    if (op=0) then exit
+
+    else begin
+        if ((place[op].r<=0) or (place[op].c<=0)) then begin
+            writeln('Esta region esta vacia, se tomara como nueva');
+            writeln('Escriba un nombre para la zona ',op);
+            readln(place[op].name);
+            repeat
+                writeln('Escriba el numero de filas para la zona ', place[op].name);
+                readln(place[op].r);
+                if ((place[op].r<0) or not(place[op].r in [1..30])) then writeln('Numero de filas debe ser un numero entero positivo mayor que cero y menor o igual a 30');
+            until (place[op].r>0);
+
+            repeat
+            writeln('Escriba el numero de columnas para la zona ', place[op].name);
+            readln(place[op].c);
+                if ((place[op].c<0) or not(place[op].c in [1..30])) then writeln('Numero de columnas debe ser un numero entero positivo mayor que cero y menor o igual a 30');
+            until (place[op].c>0);
+            randomize;
+            generateMatrix(place[op].cost,place[op].r,place[op].c);
+            generateMatrix(place[op].victims,place[op].r,place[op].c);
+            writeln('Datos generados satisfactoriamente, para consultar los datos');
+            writeln('regrese al menu principal presionando cualquier tecla y seleccionando la opcion 7');
+            exit;
+        end;
+
+        writeln('Datos costo para la region ',place[op].name);
+        writeln;
+        showDataMatrix(place[op].cost, place[op].r, place[op].c);
+        writeln;
+        writeln('Datos dolor para la region ',place[op].name);
+        writeln;
+        showDataMatrix(place[op].victims, place[op].r, place[op].c);
+        writeln;
+        writeln;
+        end;
+
 end;
 
 procedure showMenu;
 var op:char;
 begin
 op:='9';
+clrscr;
     while (op<>'0') do begin
         writeln('Bienvenido al menu principal del programa terremoto, por favor seleccione una opcion');
         writeln;
@@ -366,9 +490,15 @@ op:='9';
         end;
         '2':
         begin
+            writeOverwrite;
+            clrscr;
+            showMenu;
         end;
         '3':
         begin
+            modifyData;
+            clrscr;
+            showMenu;
         end;
         '4':
         begin
@@ -387,7 +517,7 @@ op:='9';
         end;
         '0':
         begin
-            exit;
+            halt(0);
         end;
         else begin
             writeln('Opcion fuera de rango');
@@ -404,162 +534,6 @@ begin
     writeln('Fin del programa');
     readkey;
 end.
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
 
