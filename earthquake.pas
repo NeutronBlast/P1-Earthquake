@@ -416,15 +416,38 @@ op:=-1;
 end;
 
 
-procedure modifyData;
+function selectMatrix:integer
 var op:integer;
 begin
 op:=-1;
+    if (op<>0) then begin
+        writeln('Seleccione una matriz a modificar');
+        writeln;
+        writeln('   1. Costo');
+        writeln('   2. Dolor');
+        writeln('   0. Regresar');
+        readln(op);
+    end;
+selectMatrix:=op;
+end;
+
+
+procedure modifyData;
+var op,modf,nr,nc:integer;
+begin
+op:=-1;
+nr:=0;
+nc:=0;
+modf:=-1;
     writeln('Seleccione una region a modificar');
     writeln;
     op:=select;
 
-    if (op=0) then exit
+    if (op=0) then 
+    begin
+    clrscr;
+    exit
+    end
 
     else begin
         if ((place[op].r<=0) or (place[op].c<=0)) then begin
@@ -447,6 +470,8 @@ op:=-1;
             generateMatrix(place[op].victims,place[op].r,place[op].c);
             writeln('Datos generados satisfactoriamente, para consultar los datos');
             writeln('regrese al menu principal presionando cualquier tecla y seleccionando la opcion 7');
+            readkey;
+            clrscr;
             exit;
         end;
 
@@ -459,6 +484,22 @@ op:=-1;
         showDataMatrix(place[op].victims, place[op].r, place[op].c);
         writeln;
         writeln;
+
+        repeat
+            writeln('Escriba la posicion de fila donde le gustaria modificar el dato');
+            readln(nr);
+                if ((nr>place[op].r) or (nr<=0)) then begin
+                    writeln('Fila ingresada esta fuera del rango (maximo: ',place[op].r,')');
+                end;
+        until ((nr<=place[op].r) and (nr>0));
+
+        repeat
+            writeln('Escriba la posicion de columna donde le gustaria modificar el dato');
+            readln(nc);
+                if ((nc>place[op].c) or (nc<=0)) then begin
+                    writeln('Columna ingresada esta fuera del rango (maximo: ',place[op].c,')');
+                end;
+        until ((nc<=place[op].c) and (nc>0));
         end;
 
 end;
@@ -497,8 +538,6 @@ clrscr;
         '3':
         begin
             modifyData;
-            clrscr;
-            showMenu;
         end;
         '4':
         begin
