@@ -2,6 +2,7 @@ program earthquake;
 uses crt,sysutils;
 
 type quantity = array[1..30,1..30] of integer;
+type risk = array[1..60] of integer; //Place all the values of cost/deaths here to calculate max/min risk
 
 type zone = Record
     name:string;
@@ -416,7 +417,7 @@ op:=-1;
 end;
 
 
-function selectMatrix:integer
+function selectMatrix:integer;
 var op:integer;
 begin
 op:=-1;
@@ -433,11 +434,13 @@ end;
 
 
 procedure modifyData;
-var op,modf,nr,nc:integer;
+var op,modf,nr,nc,newD:integer;
+var X:quantity;
 begin
 op:=-1;
 nr:=0;
 nc:=0;
+newD:=0;
 modf:=-1;
     writeln('Seleccione una region a modificar');
     writeln;
@@ -501,9 +504,141 @@ modf:=-1;
                 end;
         until ((nc<=place[op].c) and (nc>0));
 
-        
+        //Select matrix to modify
+        modf:=selectMatrix;
+
+            if (modf=0) then begin
+                clrscr;
+                modifyData;
+            end
+            else begin
+                repeat
+                    writeln('Escriba nuevo dato');
+                    readln(newD);
+                        if (newD<=0) then writeln('Nuevo dato debe ser un numero mayor o igual que cero');
+                until (newD>0);
+
+                if (modf=1) then begin
+                    X:=place[op].cost;
+                    X[nr,nc]:=newD;
+                    place[op].cost:=X;
+                end;
+
+                if (modf=2) then begin
+                    X:=place[op].victims;
+                    X[nr,nc]:=newD;
+                    place[op].victims:=X;
+                end;
+
+                writeln('Presione cualquier tecla para continuar');
+                readkey;
+            end;
         end;
 
+end;
+
+function calculateEarthquake(var X:quantity; limR,limC,r,c,dir,degree:integer):integer;
+var init,limit,value:integer;
+begin
+    value:=0;
+    init:=r-degree;
+    limit:=r+degree;
+    if (dir=0) then begin //Left
+        for init:=init to limit do begin
+            if (c-1<=0) then break;
+                if (init>limR) then break;
+                    value:=value+X[init,c-1];
+        end;
+    end;
+
+    if (dir=1) then begin //Center
+        for init:=init to limit do begin
+            if (init>limR) then break;
+                value:=value+X[init,c];
+        end;
+    end;
+
+    if (dir=2) then begin
+        for init:=init to limit do begin
+            if (c+1>limC) then break;
+                if (init>limR) then break;
+                    value:=value+X[init,c+1];
+        end;
+    end;
+calculateEarthquake:=value;
+end;
+
+procedure eq;
+var degree,op,deaths,costs,epR,epC,cost:integer;
+begin
+    op:=-1;
+
+    writeln('Seleccione una region a calcular');
+    writeln;
+    op:=select;
+
+    if (op=0) then 
+    begin
+        clrscr;
+        exit;
+    end
+    else begin
+    repeat
+        writeln('Ingrese grado del terremoto');
+        readln(degree);
+        if ((degree<0) or (degree>place[op].r-1) or (degree>place[op].c-1)) then begin
+            writeln('Grado de terremoto se sale del rango o es un numero invalido');
+            writeln('Debe ser un numero entero positivo mayor que cero');
+        end;
+    until((degree>0) and (degree<=place[op].r-1) and (degree<=place[op].c-1));
+
+    repeat
+        writeln('Ingrese el epicentro del terremoto (fila)');
+        readln(epR);
+            if ((epR<0) or (epR>place[op].r)) then begin
+                writeln('Epicentro es invalido, debe ser un numero mayor que cero que no se salga del rango de la region especificada');
+                writeln('Numero de filas de la region: ',place[op].r,' Numero de columnas de la region: ',place[op].c);
+            end;
+    until ((epR>0) and (epR<=place[op].r));
+
+    repeat
+        writeln('Ingrese el epicentro del terremoto (columna)');
+        readln(epC);
+            if ((epC<0) or (epC>place[op].c)) then begin
+                writeln('Epicentro es invalido, debe ser un numero mayor que cero que no se salga del rango de la region especificada');
+                writeln('Numero de filas de la region: ',place[op].r,' Numero de columnas de la region: ',place[op].c);
+            end;
+    until ((epC>0) and (epC<=place[op].c));
+
+    cost:=calculateEarthquake(place[op].cost,place[op].r,place[op].c,epR,epC,0,degree);
+    cost:=cost+calculateEarthquake(place[op].cost,place[op].r,place[op].c,epR,epC,1,degree);
+    cost:=cost+calculateEarthquake(place[op].cost,place[op].r,place[op].c,epR,epC,2,degree);
+    writeln('Perdidas economicas estimadas en la zona',place[op].name,': ',cost);
+    deaths:=calculateEarthquake(place[op].victims,place[op].r,place[op].c,epR,epC,0,degree);
+    deaths:=deaths+calculateEarthquake(place[op].victims,place[op].r,place[op].c,epR,epC,1,degree);
+    deaths:=deaths+calculateEarthquake(place[op].victims,place[op].r,place[op].c,epR,epC,2,degree);
+    writeln('Perdidas humanas estimadas en la zona',place[op].name,': ',deaths);
+    writeln;
+    writeln('Presione cualquier tecla para continuar');
+    readkey;
+    end;
+end;
+
+procedure maxMinRisk;
+var degree,epC,epR,minDeaths,maxDeaths,epMR,epMC,op:integer;
+begin
+op:=-1;
+    writeln('Seleccione una region a calcular');
+    writeln;
+    op:=select;
+
+    if (op=0) then 
+    begin
+        clrscr;
+        exit;
+    end
+    else begin
+    end;
 end;
 
 procedure showMenu;
@@ -540,9 +675,14 @@ clrscr;
         '3':
         begin
             modifyData;
+            clrscr;
+            showMenu;
         end;
         '4':
         begin
+            eq;
+            clrscr;
+            showMenu;
         end;
         '5':
         begin
