@@ -2,7 +2,7 @@ program earthquake;
 uses crt,sysutils;
 
 type quantity = array[1..30,1..30] of integer;
-type risk = array[1..60] of integer; //Place all the values of cost/deaths here to calculate max/min risk
+type risk = array[1..900] of integer; //Place all the values of cost/deaths here to calculate max/min risk
 
 type zone = Record
     name:string;
@@ -12,6 +12,7 @@ type zone = Record
 end;
 
 var place: array[1..9] of zone;
+var vectorRisk:risk;
 
 //Other useful variables
 
@@ -586,11 +587,11 @@ begin
     repeat
         writeln('Ingrese grado del terremoto');
         readln(degree);
-        if ((degree<0) or (degree>place[op].r-1) or (degree>place[op].c-1)) then begin
+        if ((degree<0) or (degree>place[op].r) or (degree>place[op].c)) then begin
             writeln('Grado de terremoto se sale del rango o es un numero invalido');
             writeln('Debe ser un numero entero positivo mayor que cero');
         end;
-    until((degree>0) and (degree<=place[op].r-1) and (degree<=place[op].c-1));
+    until((degree>0) and (degree<=place[op].r) and (degree<=place[op].c));
 
     repeat
         writeln('Ingrese el epicentro del terremoto (fila)');
@@ -624,6 +625,94 @@ begin
     end;
 end;
 
+procedure clear(var X:risk);
+var i:integer;
+begin
+    for i:=1 to 900 do
+        X[i]:=-1;
+end;
+
+//This method will be deprecated, it's only here for testing purposes
+
+procedure show(var X:risk);
+var i:integer;
+begin
+    for i:=1 to 900 do
+        write(X[i],' ');
+end;
+
+procedure getMaxMin(var Y:risk; typ,limR,limC:integer);
+var i,pos,aux,newI,newJ:integer;
+begin
+aux:=0;
+i:=1;
+pos:=0;
+     while ((i<900) and (Y[i]<>-1)) do begin
+        if (typ=1) then begin //Get max risk
+            if (Y[i]>aux) then begin
+                aux:=Y[i];
+                pos:=i;
+            end;
+        end;
+        if (typ=2) then begin //Get max risk
+            if ((Y[i]<aux) and (i>1)) then begin
+                aux:=Y[i];
+                pos:=i;
+            end
+            else if (i=1) then begin
+                aux:=Y[i];
+            end;
+        end;
+        i:=i+1;
+    end;
+    pos:=pos-1;
+    newI:=0;
+    newJ:=0;
+        if (limC=limR) then begin
+            newJ:= (pos mod limR)+1;
+            newI:= (pos div limR)+1;
+        end;
+
+        if (limC>limR) then begin
+            newJ:= pos mod limC;
+            newJ:=newJ+1;
+            newI:= pos div limC;
+            newI:= newI+1;
+        end;
+        
+        if (limR>limC) then begin
+            newJ:= pos mod limC;
+            newJ:=newJ+1;
+            newI:= pos div limC;
+            newI:= newI+1;
+        end;
+
+    if (typ=1) then begin
+        writeln('Epicentro de maximo riesgo: [',newI,',',newJ,']');
+        writeln('Muertes: ',aux);
+    end
+    else begin
+        writeln('Epicentro de minimo riesgo: [',newI,',',newJ,']');
+        writeln('Muertes: ',aux);
+    end;
+end;
+
+procedure allDeaths(var X:quantity; var Y:risk; limR,limC,degree:integer);
+var i,j,epC,epR,deaths:integer;
+begin
+j:=1;
+    for epR:=1 to limR do
+        for epC:=1 to limC do begin
+            deaths:=0;
+            deaths:=calculateEarthquake(X,limR,limC,epR,epC,0,degree);
+            deaths:=deaths+calculateEarthquake(X,limR,limC,epR,epC,1,degree);
+            deaths:=deaths+calculateEarthquake(X,limR,limC,epR,epC,2,degree);
+            Y[j]:=deaths;
+            writeln('Perdidas humanas en el epicentro [',epR,',',epC,']: ',Y[j]);
+            j:=j+1;
+        end;
+end;
+
 procedure maxMinRisk;
 var degree,epC,epR,minDeaths,maxDeaths,epMR,epMC,op:integer;
 begin
@@ -638,6 +727,75 @@ op:=-1;
         exit;
     end
     else begin
+        repeat
+            writeln('Ingrese grado del terremoto');
+            readln(degree);
+                if ((degree<0) or (degree>place[op].r) or (degree>place[op].c)) then begin
+                    writeln('Grado de terremoto se sale del rango o es un numero invalido');
+                    writeln('Debe ser un numero entero positivo mayor que cero');
+                end;
+        until((degree>0) and (degree<=place[op].r) and (degree<=place[op].c));
+
+    clear(vectorRisk);
+    allDeaths(place[op].victims,vectorRisk,place[op].r,place[op].c,degree);
+    getMaxMin(vectorRisk,1,place[op].r,place[op].c);
+    getMaxMin(vectorRisk,2,place[op].r,place[op].c);
+    writeln;
+    writeln('Presione cualquier tecla para continuar');
+    readkey;
+    end;
+end;
+
+function calculateAvg(var X:quantity; limR,limC,degree:integer):integer;
+var i,j,epC,epR,totalcost,cost,q:integer;
+begin
+j:=1;
+cost:=0;
+totalcost:=0;
+q:=0;
+    for epR:=1 to limR do
+        for epC:=1 to limC do begin
+            cost:=0;
+            cost:=calculateEarthquake(X,limR,limC,epR,epC,0,degree);
+            cost:=cost+calculateEarthquake(X,limR,limC,epR,epC,1,degree);
+            cost:=cost+calculateEarthquake(X,limR,limC,epR,epC,2,degree);
+            writeln('Costo en epicentro [', epR,',',epC,']: ',cost);
+            totalcost:=totalcost+cost;
+        end;
+    q:=limR*limC;
+    totalcost:=totalcost div q;
+calculateAvg:=totalcost;
+end;
+
+procedure averageCost;
+var degree,epC,epR,op,av:integer;
+begin
+op:=-1;
+av:=0;
+    writeln('Seleccione una region a calcular');
+    writeln;
+    op:=select;
+
+    if (op=0) then 
+    begin
+        clrscr;
+        exit;
+    end
+    else begin
+        repeat
+            writeln('Ingrese grado del terremoto');
+            readln(degree);
+                if ((degree<0) or (degree>place[op].r) or (degree>place[op].c)) then begin
+                    writeln('Grado de terremoto se sale del rango o es un numero invalido');
+                    writeln('Debe ser un numero entero positivo mayor que cero');
+                end;
+        until((degree>0) and (degree<=place[op].r) and (degree<=place[op].c));
+
+    av:=calculateAvg(place[op].cost,place[op].r,place[op].c,degree);
+    writeln('Costo promedio en la region ',place[op].name,': ',av);
+    writeln;
+    writeln('Presione cualquier tecla para continuar');
+    readkey;
     end;
 end;
 
@@ -686,9 +844,15 @@ clrscr;
         end;
         '5':
         begin
+            maxMinRisk;
+            clrscr;
+            showMenu;
         end;
         '6':
         begin
+            averageCost;
+            clrscr;
+            showMenu;
         end;
         '7':
         begin

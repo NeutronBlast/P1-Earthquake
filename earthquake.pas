@@ -746,6 +746,59 @@ op:=-1;
     end;
 end;
 
+function calculateAvg(var X:quantity; limR,limC,degree:integer):integer;
+var i,j,epC,epR,totalcost,cost,q:integer;
+begin
+j:=1;
+cost:=0;
+totalcost:=0;
+q:=0;
+    for epR:=1 to limR do
+        for epC:=1 to limC do begin
+            cost:=0;
+            cost:=calculateEarthquake(X,limR,limC,epR,epC,0,degree);
+            cost:=cost+calculateEarthquake(X,limR,limC,epR,epC,1,degree);
+            cost:=cost+calculateEarthquake(X,limR,limC,epR,epC,2,degree);
+            writeln('Costo en epicentro [', epR,',',epC,']: ',cost);
+            totalcost:=totalcost+cost;
+        end;
+    q:=limR*limC;
+    totalcost:=totalcost div q;
+calculateAvg:=totalcost;
+end;
+
+procedure averageCost;
+var degree,epC,epR,op,av:integer;
+begin
+op:=-1;
+av:=0;
+    writeln('Seleccione una region a calcular');
+    writeln;
+    op:=select;
+
+    if (op=0) then 
+    begin
+        clrscr;
+        exit;
+    end
+    else begin
+        repeat
+            writeln('Ingrese grado del terremoto');
+            readln(degree);
+                if ((degree<0) or (degree>place[op].r) or (degree>place[op].c)) then begin
+                    writeln('Grado de terremoto se sale del rango o es un numero invalido');
+                    writeln('Debe ser un numero entero positivo mayor que cero');
+                end;
+        until((degree>0) and (degree<=place[op].r) and (degree<=place[op].c));
+
+    av:=calculateAvg(place[op].cost,place[op].r,place[op].c,degree);
+    writeln('Costo promedio en la region ',place[op].name,': ',av);
+    writeln;
+    writeln('Presione cualquier tecla para continuar');
+    readkey;
+    end;
+end;
+
 procedure showMenu;
 var op:char;
 begin
@@ -797,6 +850,9 @@ clrscr;
         end;
         '6':
         begin
+            averageCost;
+            clrscr;
+            showMenu;
         end;
         '7':
         begin
