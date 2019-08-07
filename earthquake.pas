@@ -635,11 +635,11 @@ begin
     repeat
         writeln('Ingrese grado del terremoto');
         readln(degree);
-        if ((degree<0) or (degree>place[op].r) or (degree>place[op].c)) then begin
+        if ((degree<0) or (degree>10) or (degree>place[op].r) or (degree>place[op].c)) then begin
             writeln('Grado de terremoto se sale del rango o es un numero invalido');
-            writeln('Debe ser un numero entero positivo mayor que cero');
+            writeln('Debe ser un numero entero positivo mayor que cero y menor a 11');
         end;
-    until((degree>0) and (degree<=place[op].r) and (degree<=place[op].c));
+    until((degree>0) and (degree<=10) and (degree<=place[op].r) and (degree<=place[op].c));
 
     repeat
         writeln('Ingrese el epicentro del terremoto (fila)');
@@ -769,11 +769,11 @@ op:=-1;
         repeat
             writeln('Ingrese grado del terremoto');
             readln(degree);
-                if ((degree<0) or (degree>place[op].r) or (degree>place[op].c)) then begin
+                if ((degree<0) or (degree>10) or (degree>place[op].r) or (degree>place[op].c)) then begin
                     writeln('Grado de terremoto se sale del rango o es un numero invalido');
-                    writeln('Debe ser un numero entero positivo mayor que cero');
+                    writeln('Debe ser un numero entero positivo mayor que cero y menor a 11');
                 end;
-        until((degree>0) and (degree<=place[op].r) and (degree<=place[op].c));
+        until((degree>0) and (degree<=10) and (degree<=place[op].r) and (degree<=place[op].c));
 
     clear(vectorRisk);
     allDeaths(place[op].victims,vectorRisk,place[op].r,place[op].c,degree);
@@ -823,11 +823,11 @@ av:=0;
         repeat
             writeln('Ingrese grado del terremoto');
             readln(degree);
-                if ((degree<0) or (degree>place[op].r) or (degree>place[op].c)) then begin
+                if ((degree<0) or (degree>10) or (degree>place[op].r) or (degree>place[op].c)) then begin
                     writeln('Grado de terremoto se sale del rango o es un numero invalido');
                     writeln('Debe ser un numero entero positivo mayor que cero');
                 end;
-        until((degree>0) and (degree<=place[op].r) and (degree<=place[op].c));
+        until((degree>0) and (degree<=10) and (degree<=place[op].r) and (degree<=place[op].c));
 
     av:=calculateAvg(place[op].cost,place[op].r,place[op].c,degree);
     writeln('Costo promedio en la region ',place[op].name,': ',av);
