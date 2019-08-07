@@ -19,22 +19,6 @@ var vectorRisk:risk;
 var path:string; //Path of the input file
 var input:text; //Input file
 
-function verifyExistence(var input:text):boolean; 
-var x:word; //IOResult
-var r:boolean;
-    begin
-        {$I-}
-        reset(input);
-        {$I+}
-        x:=IOResult;
-            if (x <> 0) then
-	      	    r:=false //File does not exist
-	        else
-	            r:=true; //File exists
-        close(input);
-        verifyExistence:=r;
-    end;
-
 function select:integer;
 var op:integer;
 begin
@@ -310,27 +294,26 @@ begin
 end;
 
 procedure fopen(var path:string);
-var exists, error:boolean;
+var error:boolean;
 begin
     error:=false;
     writeln('Indique ruta de archivo, formato aceptado: C:\Users\Usuario\Desktop\ejemplo.txt');
     readln(path);
+    if not FileExists(path) then begin
+        writeln('Archivo no existe'); 
+        writeln('Presione cualquier tecla para regresar al menu principal');
+        readkey; 
+        exit; 
+        end;
     assign(input,path);
-    exists:=verifyExistence(input);
-        if exists then begin
-            //writeln('Archivo existe');
-            error:=searchForMistakes(input); //Search for mistakes
-                if (error = true) then begin
-                    writeln('Se encontro un error en el archivo, para continuar con la operacion por favor corrija los errores encontrados y vuelvalo a cargar');
-                end
-                else begin
-                    fillData(input);
-                    writeln('Presione cualquier tecla para continuar');
-                    readkey;
-                end;
+    error:=searchForMistakes(input); //Search for mistakes
+        if (error = true) then begin
+            writeln('Se encontro un error en el archivo, para continuar con la operacion por favor corrija los errores encontrados y vuelvalo a cargar');
         end
         else begin
-            //writeln('Archivo no existe');
+            fillData(input);
+            writeln('Presione cualquier tecla para continuar');
+            readkey;
         end;
 end;
 
