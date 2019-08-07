@@ -11,13 +11,14 @@ type zone = Record
     victims,cost:quantity; //Each zone has a matrix that represents costs and victims after the disaster
 end;
 
-var place: array[1..9] of zone;
+type p = array[1..9] of zone;
+var place: p;
 var vectorRisk:risk;
 
 //Other useful variables
 
 var path:string; //Path of the input file
-var input:text; //Input file
+var input,output:text; //Input file
 
 function select:integer;
 var op:integer;
@@ -40,7 +41,7 @@ end;
 function searchForMistakes(var input:text):boolean;
 var line,aux:string;
 var error:boolean;
-var lcount,i,j,countSpaces,rowCount,rows,columns:integer;
+var lcount,i,j,countSpaces,rowCount,rows,columns,regions:integer;
 begin
     aux:='';
     error:=false;
@@ -48,11 +49,18 @@ begin
     columns:=0;
     lcount:=0;
     rowCount:=0;
+    regions:=0;
     reset(input);
         while not eof (input) do begin
             readln(input,line);
             //writeln(line);
                 if (lcount = 0) then begin
+                    regions:=regions+1;
+                        if (regions>9) then begin
+                            writeln('Archivo sobrepasa el limite de regiones permitido (9), solo se tomaron las primeras nueve en el archivo');
+                            readkey;
+                            exit(false);
+                        end;
                     if not (line[1]='*') then begin //Each region should start with *
                         error:=true;
                         if (strtoint(line[1])<>0) then begin
@@ -177,10 +185,12 @@ begin
                                 error:=true;
                                 if ((line[1]='*') or (line[2]=' ') or (line[4]=' ') or (line[length(line)]='.')) then begin
                                     error:=true;
-                                    writeln('ERROR: Numero de filas es menor a las filas escritas');
+                                    writeln('ERROR: Numero de filas ', rowCount, 'es menor a las filas escritas ', rows);
                                     writeln('Error se encuentra antes de esta linea ',line);
                                     writeln;
-                                    break;
+                                    writeln('Presione cualquier tecla para continuar');
+                                    readkey;
+                                    exit;
                                 end;
 
                                 writeln('ERROR: Valores en matriz deben ser numeros enteros, se detecto un caracter invalido: ', line[i]);
@@ -197,7 +207,7 @@ begin
                     if (countSpaces<>columns-1) then begin
                         error:=true;
                         writeln('ERROR: Numero de columnas especificado no coincide con numero de elementos colocados, es posible que haya insertado un elemento extra o falte');
-                        writeln('Recuerde que cada elemento debe estar separado por un unico espacio.');
+                        writeln('Recuerde que cada elemento debe estar separado por un unico espacio, no pueden haber espacios al final.');
                         writeln('Linea: ',line);
                         writeln;
                     end;
@@ -206,6 +216,7 @@ begin
                     
                     if (rowCount=rows*2) then begin 
                         lcount:=-1;
+                        rowCount:=0;
                     end;
                 end;
         lcount:=lcount+1;
@@ -234,7 +245,7 @@ end;
 
 procedure fillData(var input:text);
 var line,aux:string;
-var lcount,i,j,k,rowCount,regions,mCount:integer;
+var lcount,i,rowCount,regions,mCount:integer;
 begin
     aux:='';
     lcount:=0;
@@ -354,21 +365,50 @@ begin
         end;
 end;
 
-procedure generateMatrix(var X:quantity; r,c:integer);
+procedure generateMatrix(var X:quantity; r,c,seed:integer);
 var i,j,num:integer;
 begin
     for i:=1 to r do
         for j:=1 to c do begin
-            num:=random(300)+1;
+            num:=random(seed)+1;
             X[i,j]:=num;
+        end;
+end;
+
+function selectMode:integer;
+var op:integer;
+begin
+op:=-1;
+    if (op<>0) then begin
+        writeln('Seleccione el modo en que se generaran los datos de costo y dolor de esta matriz');
+        writeln;
+        writeln('   1. Aleatorio');
+        writeln('   2. Manual');
+        writeln('   0. Regresar');
+        readln(op);
+    end;
+selectMode:=op;
+end;
+
+procedure createMatrix(var X:quantity; r,c:integer);
+var i,j,n:integer;
+begin
+    for i:=1 to r do
+        for j:=1 to c do begin
+            repeat
+            writeln('Escriba numero para la posicion [',i,',',j,']');
+            readln(n);
+                if (n<=0) then writeln ('Numero debe ser positivo y mayor que cero');
+            until (n>0);
+            X[i,j]:=n;
         end;
 end;
 
 
 procedure writeOverwrite;
-var op:integer;
+var op,mode,seed:integer;
 begin
-op:=-1;
+op:=-1;mode:=-1;seed:=0;
     if (op<>0) then begin
         writeln('Seleccione en que posicion le gustaria agregar una zona');
         writeln('Si selecciona una zona que ya posee un nombre asignado esta se sobrescribira');
@@ -390,12 +430,37 @@ op:=-1;
             readln(place[op].c);
                 if ((place[op].c<0) or not(place[op].c in [1..30])) then writeln('Numero de columnas debe ser un numero entero positivo mayor que cero y menor o igual a 30');
             until (place[op].c>0);
+
+    writeln;
+
+    if (mode<>0) then begin
+        mode:=selectMode;
+
+        if (mode=0) then exit;
+        if (mode=1) then begin
+
+            repeat
+                writeln('Ingrese maximo valor de costo y/o dolor que se va a generar');
+                readln(seed);
+                    if(seed<=0) then writeln ('Maximo valor de costo y dolor tiene que ser un numero positivo mayor a cero');
+            until (seed>0);
+
             randomize;
-            generateMatrix(place[op].cost,place[op].r,place[op].c);
-            generateMatrix(place[op].victims,place[op].r,place[op].c);
-            writeln('Datos generados satisfactoriamente, para consultar los datos');
-            writeln('regrese al menu principal presionando cualquier tecla y seleccionando la opcion 7');
-            readkey;
+            generateMatrix(place[op].cost,place[op].r,place[op].c,seed);
+            generateMatrix(place[op].victims,place[op].r,place[op].c,seed);
+        end;
+        if (mode=2) then begin
+            writeln('Creando matriz costo');
+            createMatrix(place[op].cost,place[op].r,place[op].c);
+            writeln;
+            writeln('Creando matriz dolor');
+            createMatrix(place[op].victims,place[op].r,place[op].c);
+        end;
+    end;
+        
+        writeln('Datos generados satisfactoriamente, para consultar los datos');
+        writeln('regrese al menu principal presionando cualquier tecla y seleccionando la opcion 7');
+        readkey;
         end;        
     end;
 end;
@@ -453,8 +518,8 @@ modf:=-1;
                 if ((place[op].c<0) or not(place[op].c in [1..30])) then writeln('Numero de columnas debe ser un numero entero positivo mayor que cero y menor o igual a 30');
             until (place[op].c>0);
             randomize;
-            generateMatrix(place[op].cost,place[op].r,place[op].c);
-            generateMatrix(place[op].victims,place[op].r,place[op].c);
+            generateMatrix(place[op].cost,place[op].r,place[op].c,300);
+            generateMatrix(place[op].victims,place[op].r,place[op].c,300);
             writeln('Datos generados satisfactoriamente, para consultar los datos');
             writeln('regrese al menu principal presionando cualquier tecla y seleccionando la opcion 7');
             readkey;
@@ -553,7 +618,7 @@ calculateEarthquake:=value;
 end;
 
 procedure eq;
-var degree,op,deaths,costs,epR,epC,cost:integer;
+var degree,op,deaths,epR,epC,cost:integer;
 begin
     op:=-1;
 
@@ -597,11 +662,11 @@ begin
     cost:=calculateEarthquake(place[op].cost,place[op].r,place[op].c,epR,epC,0,degree);
     cost:=cost+calculateEarthquake(place[op].cost,place[op].r,place[op].c,epR,epC,1,degree);
     cost:=cost+calculateEarthquake(place[op].cost,place[op].r,place[op].c,epR,epC,2,degree);
-    writeln('Perdidas economicas estimadas en la zona',place[op].name,': ',cost);
+    //writeln('Perdidas economicas estimadas en la zona',place[op].name,': ',cost);
     deaths:=calculateEarthquake(place[op].victims,place[op].r,place[op].c,epR,epC,0,degree);
     deaths:=deaths+calculateEarthquake(place[op].victims,place[op].r,place[op].c,epR,epC,1,degree);
     deaths:=deaths+calculateEarthquake(place[op].victims,place[op].r,place[op].c,epR,epC,2,degree);
-    writeln('Perdidas humanas estimadas en la zona',place[op].name,': ',deaths);
+    //writeln('Perdidas humanas estimadas en la zona',place[op].name,': ',deaths);
     writeln;
     writeln('Presione cualquier tecla para continuar');
     readkey;
@@ -613,15 +678,6 @@ var i:integer;
 begin
     for i:=1 to 900 do
         X[i]:=-1;
-end;
-
-//This method will be deprecated, it's only here for testing purposes
-
-procedure show(var X:risk);
-var i:integer;
-begin
-    for i:=1 to 900 do
-        write(X[i],' ');
 end;
 
 procedure getMaxMin(var Y:risk; typ,limR,limC:integer);
@@ -681,7 +737,7 @@ pos:=0;
 end;
 
 procedure allDeaths(var X:quantity; var Y:risk; limR,limC,degree:integer);
-var i,j,epC,epR,deaths:integer;
+var j,epC,epR,deaths:integer;
 begin
 j:=1;
     for epR:=1 to limR do
@@ -691,13 +747,13 @@ j:=1;
             deaths:=deaths+calculateEarthquake(X,limR,limC,epR,epC,1,degree);
             deaths:=deaths+calculateEarthquake(X,limR,limC,epR,epC,2,degree);
             Y[j]:=deaths;
-            writeln('Perdidas humanas en el epicentro [',epR,',',epC,']: ',Y[j]);
+            //writeln('Perdidas humanas en el epicentro [',epR,',',epC,']: ',Y[j]);
             j:=j+1;
         end;
 end;
 
 procedure maxMinRisk;
-var degree,epC,epR,minDeaths,maxDeaths,epMR,epMC,op:integer;
+var degree,op:integer;
 begin
 op:=-1;
     writeln('Seleccione una region a calcular');
@@ -730,9 +786,8 @@ op:=-1;
 end;
 
 function calculateAvg(var X:quantity; limR,limC,degree:integer):integer;
-var i,j,epC,epR,totalcost,cost,q:integer;
+var epC,epR,totalcost,cost,q:integer;
 begin
-j:=1;
 cost:=0;
 totalcost:=0;
 q:=0;
@@ -742,7 +797,7 @@ q:=0;
             cost:=calculateEarthquake(X,limR,limC,epR,epC,0,degree);
             cost:=cost+calculateEarthquake(X,limR,limC,epR,epC,1,degree);
             cost:=cost+calculateEarthquake(X,limR,limC,epR,epC,2,degree);
-            writeln('Costo en epicentro [', epR,',',epC,']: ',cost);
+            //writeln('Costo en epicentro [', epR,',',epC,']: ',cost);
             totalcost:=totalcost+cost;
         end;
     q:=limR*limC;
@@ -751,7 +806,7 @@ calculateAvg:=totalcost;
 end;
 
 procedure averageCost;
-var degree,epC,epR,op,av:integer;
+var degree,op,av:integer;
 begin
 op:=-1;
 av:=0;
@@ -782,6 +837,94 @@ av:=0;
     end;
 end;
 
+procedure clearMatrix(var X:quantity);
+var i,j:integer;
+begin
+    for i:=1 to 30 do
+        for j:=1 to 30 do
+            X[i,j]:=0;
+end;
+
+procedure clearAll;
+var i:integer;
+begin
+    for i:=1 to 9 do begin
+        clearMatrix(place[i].cost);
+        clearMatrix(place[i].victims);
+    end;
+end;
+
+procedure writeMatrixOnFile(var X:quantity; r,c:integer; var output:text);
+var j,k:integer;
+var aux,line:string;
+begin
+line:='';
+    for j:=1 to r do begin
+        for k:=1 to c do begin
+            aux:='';
+            str(X[j,k],aux);
+            line:=line+aux+' ';
+        end;
+    writeln(output,line);
+    line:='';
+    end;
+end;
+
+function wantAnOutputFile:integer;
+var op:integer;
+begin
+    writeln('Desea generar un archivo de salida?');
+    writeln;
+    writeln('   1. Si');
+    writeln('   2. No');
+    readln(op);
+wantAnOutputFile:=op;
+end;
+
+procedure finalConfig (var output:text);
+var path,line,aux:string;
+var i,op:integer;
+var X,Y:quantity;
+begin
+    op:=-1;
+        if (op<>0) then begin
+            op:=wantAnOutputFile;
+            if (op=1) then begin
+                writeln('Indique ruta de archivo, formato aceptado: C:\Users\Usuario\Desktop\ejemplo.txt');
+                readln(path);
+                assign(output,path);
+                rewrite(output);
+                    aux:='';
+                    for i:=1 to 9 do begin
+                        X:=place[i].cost;
+                        Y:=place[i].victims;
+                        str(i,aux);
+                        line:='* '+aux+' '+place[i].name;
+                        writeln(output,line);
+                        line:='';
+                        aux:='';
+                        str(place[i].r,aux);
+                        line:=aux+' ';
+                        aux:='';
+                        str(place[i].c,aux);
+                        line:=line+aux;
+                        writeln(output,line);
+                        line:='';
+                        writeMatrixOnFile(X,place[i].r,place[i].c,output);
+                        writeMatrixOnFile(Y,place[i].r,place[i].c,output);
+                    end;
+                close(output);
+                writeln('Archivo de salida generado satisfactoriamente. Presione cualquier tecla para finalizar el programa');
+                readkey;
+            end
+            else if (op=2) then begin
+                writeln('Presione cualquier tecla para salir del programa');
+                readkey;
+                exit;
+            end;
+        end;
+end;
+
 procedure showMenu;
 var op:char;
 begin
@@ -803,6 +946,7 @@ clrscr;
         case op of
         '1':
         begin
+            clearAll;
             fopen(path);
             clrscr;
             showMenu;
@@ -845,6 +989,7 @@ clrscr;
         end;
         '0':
         begin
+            finalConfig(output);
             halt(0);
         end;
         else begin
