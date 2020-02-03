@@ -662,11 +662,11 @@ begin
     cost:=calculateEarthquake(place[op].cost,place[op].r,place[op].c,epR,epC,0,degree);
     cost:=cost+calculateEarthquake(place[op].cost,place[op].r,place[op].c,epR,epC,1,degree);
     cost:=cost+calculateEarthquake(place[op].cost,place[op].r,place[op].c,epR,epC,2,degree);
-    //writeln('Perdidas economicas estimadas en la zona',place[op].name,': ',cost);
+    writeln('Perdidas economicas estimadas en la zona',place[op].name,': ',cost);
     deaths:=calculateEarthquake(place[op].victims,place[op].r,place[op].c,epR,epC,0,degree);
     deaths:=deaths+calculateEarthquake(place[op].victims,place[op].r,place[op].c,epR,epC,1,degree);
     deaths:=deaths+calculateEarthquake(place[op].victims,place[op].r,place[op].c,epR,epC,2,degree);
-    //writeln('Perdidas humanas estimadas en la zona',place[op].name,': ',deaths);
+    writeln('Perdidas humanas estimadas en la zona',place[op].name,': ',deaths);
     writeln;
     writeln('Presione cualquier tecla para continuar');
     readkey;
